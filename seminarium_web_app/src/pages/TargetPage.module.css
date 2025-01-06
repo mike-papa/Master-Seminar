@@ -1,0 +1,38 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  background-color: #f1f3f5;
+}
+
+.title {
+  font-size: 2rem;
+  color: #343a40;
+  margin-bottom: 1rem;
+}
+
+.paragraph {
+  font-size: 1rem;
+  color: #495057;
+}
+
+.paragraph strong {
+  color: #007bff;
+}
+.button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #28a745;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 1rem;
+}
+
+.button:hover {
+  background-color: #218838;
+}
