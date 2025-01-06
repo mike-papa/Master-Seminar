@@ -7,6 +7,8 @@ const TargetPage: React.FC = () => {
   const [compareVideoUrl, setCompareVideoUrl] = useState<string | null>(null);
   const [isCompareVideoEnded, setIsCompareVideoEnded] =
     useState<boolean>(false);
+  const [isMainVideoEnded, setIsMainVideoEnded] = useState<boolean>(false);
+
   const [isMainVideoVisible, setIsMainVideoVisible] = useState<boolean>(false);
   const [questionAnswered, setQuestionAnswered] = useState<boolean>(false);
 
@@ -100,6 +102,7 @@ const TargetPage: React.FC = () => {
       setQuestionAnswered(false);
       setIsCompareVideoEnded(false);
       setIsMainVideoVisible(false);
+      setIsMainVideoEnded(false);
       setCompareVideoElapsedTime(0);
       setMainVideoElapsedTime(0);
       loadVideo();
@@ -168,6 +171,7 @@ const TargetPage: React.FC = () => {
               const duration = e.currentTarget.duration;
               setMainVideoDuration(duration);
             }}
+            onEnded={() => setIsMainVideoEnded(true)}
           >
             <source src={videoUrl} type="video/mp4" />
             Twoja przeglądarka nie obsługuje odtwarzacza wideo.
@@ -180,7 +184,7 @@ const TargetPage: React.FC = () => {
         </div>
       )}
 
-      {isMainVideoVisible && !questionAnswered && (
+      {isMainVideoEnded && !questionAnswered && (
         <div>
           <p className={styles.paragraph}>
             Czy postać na obecnym nagraniu to ta sama postać z pierwszego
