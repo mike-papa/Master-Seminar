@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import styles from "./TargetPage.module.css";
 
@@ -27,12 +28,20 @@ const TargetPage: React.FC = () => {
   const currentQuestionIndex = currentIndex ? parseInt(currentIndex) : 0;
   const remainingQuestions = totalQuestions - currentQuestionIndex;
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const loadVideo = () => {
       if (videoEffects) {
         try {
           const parsedEffects = JSON.parse(videoEffects);
           const index = currentIndex ? parseInt(currentIndex) : 0;
+
+          // Check if index is out of bounds
+          if (index >= parsedEffects.length) {
+            navigate("/thank-you");
+            return;
+          }
 
           const effect = parsedEffects[index];
 
@@ -52,7 +61,7 @@ const TargetPage: React.FC = () => {
     };
 
     loadVideo();
-  }, [videoEffects, currentIndex]);
+  }, [videoEffects, currentIndex, navigate]);
 
   useEffect(() => {
     let interval: number | null = null;
