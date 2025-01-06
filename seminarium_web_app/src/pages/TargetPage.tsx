@@ -39,6 +39,8 @@ const TargetPage: React.FC = () => {
           if (effect && effect.filename) {
             const videoPath = `/video/${effect.id}/${effect.filename}`;
             const compareVideoPath = `/video/${effect.id}/compare_cut.mp4`;
+            console.log("compareVideoPath: " + compareVideoPath);
+            console.log("videoPath: " + videoPath);
 
             setVideoUrl(videoPath);
             setCompareVideoUrl(compareVideoPath);
@@ -88,11 +90,6 @@ const TargetPage: React.FC = () => {
 
   const handleQuestionAnswered = (answer: string) => {
     console.log("User answered:", answer);
-
-    const parsedEffects = videoEffects ? JSON.parse(videoEffects) : [];
-    parsedEffects.shift();
-
-    Cookies.set("video_effects", JSON.stringify(parsedEffects));
 
     const nextIndex = (parseInt(currentIndex || "0") + 1).toString();
     Cookies.set("current_index", nextIndex);
