@@ -109,6 +109,26 @@ const TargetPage: React.FC = () => {
     }, 1000);
   };
 
+  const playVideoOnClick = () => {
+    const videoElements = document.querySelectorAll("video");
+    videoElements.forEach((video) => {
+      if (video.paused) {
+        video.play().catch((error) => {
+          console.error("Error playing video:", error);
+        });
+      }
+    });
+  };
+
+  useEffect(() => {
+    // Add global listener after installation
+    document.addEventListener("click", playVideoOnClick);
+    return () => {
+      // Remove the listener after unmounting
+      document.removeEventListener("click", playVideoOnClick);
+    };
+  }, []);
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Strona Docelowa</h1>
