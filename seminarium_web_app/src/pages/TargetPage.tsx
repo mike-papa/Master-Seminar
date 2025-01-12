@@ -1,139 +1,102 @@
+// File: seminarium_web_app/src/pages/TargetPage.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
+import VideoPlayer from "../components/VideoPlayer";
+import Questionnaire from "../components/Questionnaire";
 import styles from "./TargetPage.module.css";
 
 const TargetPage: React.FC = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [compareVideoUrl, setCompareVideoUrl] = useState<string | null>(null);
-  const [isCompareVideoEnded, setIsCompareVideoEnded] =
-    useState<boolean>(false);
-  const [isMainVideoEnded, setIsMainVideoEnded] = useState<boolean>(false);
+  const [isCompareVideoEnded, setIsCompareVideoEnded] = useState(false);
+  const [isMainVideoVisible, setIsMainVideoVisible] = useState(false);
+  const [isMainVideoEnded, setIsMainVideoEnded] = useState(false);
+  const [questionAnswered, setQuestionAnswered] = useState(false);
 
-  const [isMainVideoVisible, setIsMainVideoVisible] = useState<boolean>(false);
-  const [questionAnswered, setQuestionAnswered] = useState<boolean>(false);
-
-  const [compareVideoElapsedTime, setCompareVideoElapsedTime] =
-    useState<number>(0);
-  const [mainVideoElapsedTime, setMainVideoElapsedTime] = useState<number>(0);
-  const [compareVideoDuration, setCompareVideoDuration] = useState<number>(0);
-  const [mainVideoDuration, setMainVideoDuration] = useState<number>(0);
+  // Używamy stanu, by przechowywać aktualny indeks pytania.
+  const [currentIndexState, setCurrentIndexState] = useState<number>(() => {
+    const cookieIndex = Cookies.get("current_index");
+    return cookieIndex ? parseInt(cookieIndex) : 0;
+  });
 
   const surveyId = Cookies.get("survey_id");
-
   const videoEffects = Cookies.get("video_effects");
-  const currentIndex = Cookies.get("current_index");
-
   const totalQuestions = 20;
-  const currentQuestionIndex = currentIndex ? parseInt(currentIndex) : 0;
+  // Korzystamy z aktualnego stanu zamiast ciasteczka:
+  const currentQuestionIndex = currentIndexState;
   const remainingQuestions = totalQuestions - currentQuestionIndex;
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadVideo = () => {
-      if (videoEffects) {
-        try {
-          const parsedEffects = JSON.parse(videoEffects);
-          const index = currentIndex ? parseInt(currentIndex) : 0;
-
-          // Check if index is out of bounds
-          if (index >= parsedEffects.length) {
-            navigate("/thank-you");
-            return;
-          }
-
-          const effect = parsedEffects[index];
-
-          if (effect && effect.filename) {
-            const videoPath = `/video/${effect.id}/${effect.filename}`;
-            const compareVideoPath = `/video/${effect.id}/compare_cut.mp4`;
-            console.log("compareVideoPath: " + compareVideoPath);
-            console.log("videoPath: " + videoPath);
-
-            setVideoUrl(videoPath);
-            setCompareVideoUrl(compareVideoPath);
-          }
-        } catch (error) {
-          console.error("Error parsing video effects:", error);
+  // Funkcja ładująca ścieżki do wideo – korzystamy z currentIndexState
+  const loadVideo = () => {
+    if (videoEffects) {
+      try {
+        const parsedEffects = JSON.parse(videoEffects);
+        if (currentIndexState >= parsedEffects.length) {
+          navigate("/thank-you");
+          return;
         }
+        const effect = parsedEffects[currentIndexState];
+        if (effect && effect.filename) {
+          const videoPath = `/video/${effect.id}/${effect.filename}`;
+          const compareVideoPath = `/video/${effect.id}/compare_cut.mp4`;
+          setVideoUrl(videoPath);
+          setCompareVideoUrl(compareVideoPath);
+        }
+      } catch (error) {
+        console.error("Error parsing video effects:", error);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     loadVideo();
-  }, [videoEffects, currentIndex, navigate]);
-
-  useEffect(() => {
-    let interval: number | null = null;
-    if (!isCompareVideoEnded && compareVideoDuration > 0) {
-      interval = window.setInterval(() => {
-        setCompareVideoElapsedTime((prev) => prev + 1);
-      }, 1000);
-    }
-
-    return () => {
-      if (interval !== null) clearInterval(interval);
+    // Global listener – odtwarzanie wideo po kliknięciu (gdyby autoplay był zablokowany)
+    const playVideoOnClick = () => {
+      document.querySelectorAll("video").forEach((video) => {
+        if (video.paused) {
+          video
+            .play()
+            .catch((error) => console.error("Error playing video:", error));
+        }
+      });
     };
-  }, [isCompareVideoEnded, compareVideoDuration]);
-
-  useEffect(() => {
-    let interval: number | null = null;
-    if (isMainVideoVisible && !questionAnswered && mainVideoDuration > 0) {
-      interval = window.setInterval(() => {
-        setMainVideoElapsedTime((prev) => prev + 1);
-      }, 1000);
-    }
-
+    document.addEventListener("click", playVideoOnClick);
     return () => {
-      if (interval !== null) clearInterval(interval);
+      document.removeEventListener("click", playVideoOnClick);
     };
-  }, [isMainVideoVisible, questionAnswered, mainVideoDuration]);
+    // Nie umieszczamy currentIndexState w zależnościach, by nie powodować ponownego ładowania wideo przy każdej zmianie – ładowanie wykonamy
+    // w handleQuestionAnswered
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoEffects, navigate]);
 
+  // Obsługa zakończenia odtwarzania wideo porównawczego
   const handleCompareVideoEnd = () => {
     setIsCompareVideoEnded(true);
   };
 
+  // Akcja do wyświetlenia głównego wideo
   const handlePlayMainVideo = () => {
     setIsMainVideoVisible(true);
   };
 
+  // Obsługa udzielenia odpowiedzi i przejścia do kolejnego pytania:
   const handleQuestionAnswered = (answer: string) => {
     console.log("User answered:", answer);
-
-    const nextIndex = (parseInt(currentIndex || "0") + 1).toString();
-    Cookies.set("current_index", nextIndex);
-
+    const nextIndex = currentIndexState + 1;
+    setCurrentIndexState(nextIndex);
+    Cookies.set("current_index", nextIndex.toString());
     setQuestionAnswered(true);
     setTimeout(() => {
       setQuestionAnswered(false);
       setIsCompareVideoEnded(false);
       setIsMainVideoVisible(false);
       setIsMainVideoEnded(false);
-      setCompareVideoElapsedTime(0);
-      setMainVideoElapsedTime(0);
       loadVideo();
     }, 1000);
   };
-
-  const playVideoOnClick = () => {
-    const videoElements = document.querySelectorAll("video");
-    videoElements.forEach((video) => {
-      if (video.paused) {
-        video.play().catch((error) => {
-          console.error("Error playing video:", error);
-        });
-      }
-    });
-  };
-
-  useEffect(() => {
-    // Add global listener after installation
-    document.addEventListener("click", playVideoOnClick);
-    return () => {
-      // Remove the listener after unmounting
-      document.removeEventListener("click", playVideoOnClick);
-    };
-  }, []);
 
   return (
     <div className={styles.container}>
@@ -145,39 +108,24 @@ const TargetPage: React.FC = () => {
       ) : (
         <p className={styles.paragraph}>Brak identyfikatora badania.</p>
       )}
-
       <p className={styles.paragraph}>
         {currentQuestionIndex + 1} / {totalQuestions} - Pozostało pytań:{" "}
         {remainingQuestions}
       </p>
 
+      {/* Odtwarzacz wideo porównawczego */}
       {compareVideoUrl && !isMainVideoVisible && (
         <div>
           <p className={styles.paragraph}>Wideo porównawcze:</p>
-          <video
-            controls={false}
-            width="640"
+          <VideoPlayer
+            src={compareVideoUrl}
             autoPlay
-            onEnded={handleCompareVideoEnd}
-            onLoadedMetadata={(e) => {
-              const duration = e.currentTarget.duration;
-              setCompareVideoDuration(duration);
-            }}
-          >
-            <source src={compareVideoUrl} type="video/mp4" />
-            Twoja przeglądarka nie obsługuje odtwarzacza wideo.
-          </video>
-          <p className={styles.paragraph}>
-            Pozostało:{" "}
-            {Math.max(
-              compareVideoDuration - compareVideoElapsedTime,
-              0
-            ).toFixed(0)}{" "}
-            sekund
-          </p>
+            onVideoEnd={handleCompareVideoEnd}
+          />
         </div>
       )}
 
+      {/* Przycisk do uruchomienia głównego wideo */}
       {isCompareVideoEnded && !isMainVideoVisible && (
         <div>
           <button onClick={handlePlayMainVideo} className={styles.button}>
@@ -186,49 +134,21 @@ const TargetPage: React.FC = () => {
         </div>
       )}
 
+      {/* Główne wideo */}
       {isMainVideoVisible && videoUrl && (
         <div>
           <p className={styles.paragraph}>Wideo:</p>
-          <video
-            controls={false}
-            width="640"
+          <VideoPlayer
+            src={videoUrl}
             autoPlay
-            onLoadedMetadata={(e) => {
-              const duration = e.currentTarget.duration;
-              setMainVideoDuration(duration);
-            }}
-            onEnded={() => setIsMainVideoEnded(true)}
-          >
-            <source src={videoUrl} type="video/mp4" />
-            Twoja przeglądarka nie obsługuje odtwarzacza wideo.
-          </video>
-          <p className={styles.paragraph}>
-            Pozostało:{" "}
-            {Math.max(mainVideoDuration - mainVideoElapsedTime, 0).toFixed(0)}{" "}
-            sekund
-          </p>
+            onVideoEnd={() => setIsMainVideoEnded(true)}
+          />
         </div>
       )}
 
+      {/* Pytanie po zakończeniu głównego wideo */}
       {isMainVideoEnded && !questionAnswered && (
-        <div>
-          <p className={styles.paragraph}>
-            Czy postać na obecnym nagraniu to ta sama postać z pierwszego
-            nagrania?
-          </p>
-          <button
-            onClick={() => handleQuestionAnswered("prawda")}
-            className={styles.button}
-          >
-            Prawda
-          </button>
-          <button
-            onClick={() => handleQuestionAnswered("falsz")}
-            className={styles.button}
-          >
-            Falsz
-          </button>
-        </div>
+        <Questionnaire onAnswer={handleQuestionAnswered} />
       )}
 
       {!compareVideoUrl && (

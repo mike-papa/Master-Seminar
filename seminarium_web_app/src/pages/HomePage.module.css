@@ -7,17 +7,18 @@
   background-color: #f1f3f5;
 }
 
-.title {
-  font-size: 2rem;
-  color: #333;
-  margin-bottom: 1rem;
-}
-
 .description {
   font-size: 1rem;
   color: #666;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+}
+
+.list {
+  list-style: disc;
+  padding-left: 1.5rem;
+  text-align: left;
+  margin-bottom: 1rem;
 }
 
 .button {
@@ -29,6 +30,7 @@
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+  margin-top: 1rem;
 }
 
 .button:hover {

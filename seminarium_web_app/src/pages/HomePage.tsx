@@ -2,8 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
+import Card from "../components/Card";
 import styles from "./HomePage.module.css";
 
+// Array mixing function
 const shuffleArray = <T,>(array: T[]): T[] => {
   return array
     .map((item) => ({ item, sort: Math.random() }))
@@ -11,18 +13,16 @@ const shuffleArray = <T,>(array: T[]): T[] => {
     .map(({ item }) => item);
 };
 
+// Asynchronous function for loading video effects
 const loadVideoEffects = async (): Promise<string[]> => {
   const response = await fetch("/video.json");
   if (!response.ok) {
     throw new Error(`Błąd ładowania pliku: ${response.statusText}`);
   }
-
   const data: string[] = await response.json();
-
   if (data.length !== 10) {
     throw new Error("Plik video.json musi zawierać dokładnie 10 elementów.");
   }
-
   return data;
 };
 
@@ -50,6 +50,8 @@ const HomePage: React.FC = () => {
       const surveyId = uuidv4();
       Cookies.set("survey_id", surveyId, { expires: 7 });
 
+      Cookies.set("current_index", "0", { expires: 7 });
+
       navigate("/target");
     } catch (error) {
       console.error("Błąd podczas ładowania efektów:", error);
@@ -58,8 +60,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Badanie Pracy Magisterskiej</h1>
+      <Card title="Badanie Pracy Magisterskiej">
         <p className={styles.description}>
           Witamy! Dziękujemy za udział w naszym badaniu. Celem tego badania jest
           zbadanie wpływu <strong>efektów graficznych</strong> na rozpoznawanie
@@ -77,7 +78,7 @@ const HomePage: React.FC = () => {
         </ul>
         <p className={styles.description}>
           Twoim zadaniem będzie ocenić, czy osoba widoczna na drugim nagraniu to
-          ta sama osoba, która występowała na pierwszym nagraniu.
+          ta sama osoba, która wystąpiła na pierwszym nagraniu.
         </p>
         <p className={styles.description}>
           Badanie składa się z <strong>20 pytań</strong>, które pomagają nam
@@ -86,7 +87,7 @@ const HomePage: React.FC = () => {
         <button className={styles.button} onClick={handleStart}>
           Rozpocznij
         </button>
-      </div>
+      </Card>
     </div>
   );
 };
