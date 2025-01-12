@@ -14,34 +14,35 @@ const TargetPage: React.FC = () => {
   const [isMainVideoEnded, setIsMainVideoEnded] = useState(false);
   const [questionAnswered, setQuestionAnswered] = useState(false);
 
-  // Używamy stanu, by przechowywać aktualny indeks pytania.
-  const [currentIndexState, setCurrentIndexState] = useState<number>(() => {
-    const cookieIndex = Cookies.get("current_index");
-    return cookieIndex ? parseInt(cookieIndex) : 0;
-  });
-
   const surveyId = Cookies.get("survey_id");
   const videoEffects = Cookies.get("video_effects");
   const totalQuestions = 20;
-  // Korzystamy z aktualnego stanu zamiast ciasteczka:
-  const currentQuestionIndex = currentIndexState;
-  const remainingQuestions = totalQuestions - currentQuestionIndex;
 
-  const navigate = useNavigate();
-
-  // Funkcja ładująca ścieżki do wideo – korzystamy z currentIndexState
+  // Function to load video paths based on the current index from cookies.
   const loadVideo = () => {
+    // Always get the current index from cookies (if cookie does not exist, index = 0)
+    const currentIndex = parseInt(Cookies.get("current_index") || "0", 10);
+    const remainingQuestions = totalQuestions - currentIndex;
+
+    // If video effects are available, parse them and load the video for current index.
     if (videoEffects) {
       try {
         const parsedEffects = JSON.parse(videoEffects);
-        if (currentIndexState >= parsedEffects.length) {
+        if (currentIndex >= parsedEffects.length) {
+          // If currentIndex is equal or greater than available effects, navigate to thank-you page.
           navigate("/thank-you");
           return;
         }
-        const effect = parsedEffects[currentIndexState];
+        const effect = parsedEffects[currentIndex];
         if (effect && effect.filename) {
           const videoPath = `/video/${effect.id}/${effect.filename}`;
           const compareVideoPath = `/video/${effect.id}/compare_cut.mp4`;
+
+          // Log the current index, folder (effect.id) and video filename for the compare video.
+          console.log(
+            `Loading compare video: index = ${currentIndex}, folder = ${effect.id}, filename = compare_cut.mp4`
+          );
+
           setVideoUrl(videoPath);
           setCompareVideoUrl(compareVideoPath);
         }
@@ -51,9 +52,11 @@ const TargetPage: React.FC = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     loadVideo();
-    // Global listener – odtwarzanie wideo po kliknięciu (gdyby autoplay był zablokowany)
+    // Global listener – play video on click when autoplay is blocked.
     const playVideoOnClick = () => {
       document.querySelectorAll("video").forEach((video) => {
         if (video.paused) {
@@ -67,27 +70,27 @@ const TargetPage: React.FC = () => {
     return () => {
       document.removeEventListener("click", playVideoOnClick);
     };
-    // Nie umieszczamy currentIndexState w zależnościach, by nie powodować ponownego ładowania wideo przy każdej zmianie – ładowanie wykonamy
-    // w handleQuestionAnswered
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Dependencies: videoEffects and navigate.
   }, [videoEffects, navigate]);
 
-  // Obsługa zakończenia odtwarzania wideo porównawczego
+  // Handler for the end of the compare video playback.
   const handleCompareVideoEnd = () => {
     setIsCompareVideoEnded(true);
   };
 
-  // Akcja do wyświetlenia głównego wideo
+  // Handler to show the main video.
   const handlePlayMainVideo = () => {
     setIsMainVideoVisible(true);
   };
 
-  // Obsługa udzielenia odpowiedzi i przejścia do kolejnego pytania:
+  // Handler when an answer is given to the question.
   const handleQuestionAnswered = (answer: string) => {
     console.log("User answered:", answer);
-    const nextIndex = currentIndexState + 1;
-    setCurrentIndexState(nextIndex);
+    // Get the current index from cookies, increment it, and update the cookie.
+    const currentIndex = parseInt(Cookies.get("current_index") || "0", 10);
+    const nextIndex = currentIndex + 1;
     Cookies.set("current_index", nextIndex.toString());
+
     setQuestionAnswered(true);
     setTimeout(() => {
       setQuestionAnswered(false);
@@ -98,25 +101,29 @@ const TargetPage: React.FC = () => {
     }, 1000);
   };
 
+  // Always use the current index from cookies for display purposes.
+  const currentIndexDisplay = parseInt(Cookies.get("current_index") || "0", 10);
+  const remainingQuestions = totalQuestions - currentIndexDisplay;
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Strona Docelowa</h1>
+      <h1 className={styles.title}>Target Page</h1>
       {surveyId ? (
         <p className={styles.paragraph}>
-          Twój identyfikator badania: <strong>{surveyId}</strong>
+          Your survey ID: <strong>{surveyId}</strong>
         </p>
       ) : (
-        <p className={styles.paragraph}>Brak identyfikatora badania.</p>
+        <p className={styles.paragraph}>No survey ID found.</p>
       )}
       <p className={styles.paragraph}>
-        {currentQuestionIndex + 1} / {totalQuestions} - Pozostało pytań:{" "}
+        {currentIndexDisplay + 1} / {totalQuestions} - Remaining questions:{" "}
         {remainingQuestions}
       </p>
 
-      {/* Odtwarzacz wideo porównawczego */}
+      {/* Compare video player */}
       {compareVideoUrl && !isMainVideoVisible && (
         <div>
-          <p className={styles.paragraph}>Wideo porównawcze:</p>
+          <p className={styles.paragraph}>Compare Video:</p>
           <VideoPlayer
             src={compareVideoUrl}
             autoPlay
@@ -125,19 +132,19 @@ const TargetPage: React.FC = () => {
         </div>
       )}
 
-      {/* Przycisk do uruchomienia głównego wideo */}
+      {/* Button to play the main video */}
       {isCompareVideoEnded && !isMainVideoVisible && (
         <div>
           <button onClick={handlePlayMainVideo} className={styles.button}>
-            Zobacz główne wideo
+            Watch Main Video
           </button>
         </div>
       )}
 
-      {/* Główne wideo */}
+      {/* Main video player */}
       {isMainVideoVisible && videoUrl && (
         <div>
-          <p className={styles.paragraph}>Wideo:</p>
+          <p className={styles.paragraph}>Video:</p>
           <VideoPlayer
             src={videoUrl}
             autoPlay
@@ -146,13 +153,13 @@ const TargetPage: React.FC = () => {
         </div>
       )}
 
-      {/* Pytanie po zakończeniu głównego wideo */}
+      {/* Questionnaire displayed after main video ends */}
       {isMainVideoEnded && !questionAnswered && (
         <Questionnaire onAnswer={handleQuestionAnswered} />
       )}
 
       {!compareVideoUrl && (
-        <p className={styles.paragraph}>Nie udało się załadować wideo.</p>
+        <p className={styles.paragraph}>Failed to load video.</p>
       )}
     </div>
   );
