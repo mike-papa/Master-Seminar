@@ -4,6 +4,8 @@ import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
 import Card from "../components/Card";
 import styles from "./HomePage.module.css";
+import { createSurvey } from "../services/SurveyService";
+import { SurveyDto } from "../services/types";
 
 // Array mixing function
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -51,6 +53,18 @@ const HomePage: React.FC = () => {
       Cookies.set("survey_id", surveyId, { expires: 7 });
 
       Cookies.set("current_index", "0", { expires: 7 });
+
+      try {
+        const surveyPayload: SurveyDto = {
+          frontendId: surveyId,
+          email: "user@example.com",
+        };
+
+        const createdSurvey = await createSurvey(surveyPayload);
+        console.log("Ankieta utworzona:", createdSurvey);
+      } catch (error) {
+        console.error("Błąd przy tworzeniu ankiety:", error);
+      }
 
       navigate("/target");
     } catch (error) {
