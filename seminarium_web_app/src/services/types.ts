@@ -8,7 +8,7 @@ export interface SurveyDto {
 export interface SurveyAnswersDto {
   id?: number;
   answer: boolean;
-  videoEffectId: number;
+  videoEffectName: string;
   videoId: number;
   surveyId?: number;
   frontendId: string;

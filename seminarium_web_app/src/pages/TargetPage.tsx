@@ -99,14 +99,15 @@ const TargetPage: React.FC = () => {
     // Przygotowanie danych do wysyłki
     const currentEffect = videoEffects[currentIndex];
     const answerPayload = {
-      answer: answer === "prawda", // boolean true/false
-      videoEffectId: currentEffect.id,
+      answer: answer === "prawda",
+      videoEffectName: currentEffect.filename,
       videoId: currentEffect.id,
-      frontendId: Cookies.get("survey_id") || "anonymous",
+      frontendId: surveyId,
     };
 
     try {
       // Wysyłka odpowiedzi do API
+      console.log("Answer payload:", answerPayload);
       const response = await submitSurveyAnswer(answerPayload);
       console.log("Answer submitted:", response);
 
