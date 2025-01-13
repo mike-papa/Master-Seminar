@@ -23,7 +23,6 @@ const TargetPage: React.FC = () => {
   const loadVideo = () => {
     // Always get the current index from cookies (if cookie does not exist, index = 0)
     const currentIndex = parseInt(Cookies.get("current_index") || "0", 10);
-    const remainingQuestions = totalQuestions - currentIndex;
 
     // If video effects are available, parse them and load the video for current index.
     if (videoEffects) {
