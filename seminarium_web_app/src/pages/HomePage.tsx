@@ -17,7 +17,8 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 // Asynchronous function for loading video effects
 const loadVideoEffects = async (): Promise<string[]> => {
-  const response = await fetch("/video.json");
+  // import.meta.env.BASE_URL matches the base configuration in vite.config.ts
+  const response = await fetch(`${import.meta.env.BASE_URL}/video.json`);
   if (!response.ok) {
     throw new Error(`Błąd ładowania pliku: ${response.statusText}`);
   }

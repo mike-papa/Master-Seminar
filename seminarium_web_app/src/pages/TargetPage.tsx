@@ -35,8 +35,9 @@ const TargetPage: React.FC = () => {
         }
         const effect = parsedEffects[currentIndex];
         if (effect && effect.filename) {
-          const videoPath = `/video/${effect.id}/${effect.filename}`;
-          const compareVideoPath = `/video/${effect.id}/compare_cut.mp4`;
+          const baseUrl = import.meta.env.BASE_URL;
+          const videoPath = `${baseUrl}/video/${effect.id}/${effect.filename}`;
+          const compareVideoPath = `${baseUrl}/video/${effect.id}/compare_cut.mp4`;
 
           // Log the current index, folder (effect.id) and video filename for the compare video.
           console.log(
