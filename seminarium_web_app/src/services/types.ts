@@ -10,7 +10,7 @@ export interface SurveyAnswersDto {
   answer: boolean;
   videoEffectId: number;
   videoId: number;
-  surveyId: number;
+  surveyId?: number;
   frontendId: string;
   createdAt?: string;
 }

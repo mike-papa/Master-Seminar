@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import VideoPlayer from "../components/VideoPlayer";
 import Questionnaire from "../components/Questionnaire";
 import styles from "./TargetPage.module.css";
+import { submitSurveyAnswer } from "../services/SurveyService";
 
 const TargetPage: React.FC = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -83,22 +84,46 @@ const TargetPage: React.FC = () => {
     setIsMainVideoVisible(true);
   };
 
-  // Handler when an answer is given to the question.
-  const handleQuestionAnswered = (answer: string) => {
+  const handleQuestionAnswered = async (answer: string) => {
     console.log("User answered:", answer);
-    // Get the current index from cookies, increment it, and update the cookie.
-    const currentIndex = parseInt(Cookies.get("current_index") || "0", 10);
-    const nextIndex = currentIndex + 1;
-    Cookies.set("current_index", nextIndex.toString());
 
-    setQuestionAnswered(true);
-    setTimeout(() => {
-      setQuestionAnswered(false);
-      setIsCompareVideoEnded(false);
-      setIsMainVideoVisible(false);
-      setIsMainVideoEnded(false);
-      loadVideo();
-    }, 1000);
+    const currentIndex = parseInt(Cookies.get("current_index") || "0", 10);
+    const videoEffects = JSON.parse(Cookies.get("video_effects") || "[]");
+    const surveyId = Cookies.get("survey_id");
+
+    if (!surveyId || currentIndex >= videoEffects.length) {
+      console.error("Missing survey ID or invalid index.");
+      return;
+    }
+
+    // Przygotowanie danych do wysyłki
+    const currentEffect = videoEffects[currentIndex];
+    const answerPayload = {
+      answer: answer === "prawda", // boolean true/false
+      videoEffectId: currentEffect.id,
+      videoId: currentEffect.id,
+      frontendId: Cookies.get("survey_id") || "anonymous",
+    };
+
+    try {
+      // Wysyłka odpowiedzi do API
+      const response = await submitSurveyAnswer(answerPayload);
+      console.log("Answer submitted:", response);
+
+      // Aktualizacja stanu po wysyłce odpowiedzi
+      const nextIndex = currentIndex + 1;
+      Cookies.set("current_index", nextIndex.toString());
+      setQuestionAnswered(true);
+      setTimeout(() => {
+        setQuestionAnswered(false);
+        setIsCompareVideoEnded(false);
+        setIsMainVideoVisible(false);
+        setIsMainVideoEnded(false);
+        loadVideo();
+      }, 1000);
+    } catch (error) {
+      console.error("Error submitting survey answer:", error);
+    }
   };
 
   // Always use the current index from cookies for display purposes.
